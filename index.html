@@ -153,7 +153,10 @@
     <div class="grid2" id="colectivos"></div>
 
     <div class="card">
-      <h2>Resumen (como en la planilla)</h2>
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <h2 style="margin:0">Resumen (como en la planilla)</h2>
+        <button class="btn sm red" id="btnPdf">📄 PDF Números para Gendarmería</button>
+      </div>
       <div class="grid2" id="resumen"></div>
     </div>
   </section>
@@ -596,6 +599,66 @@ document.getElementById("delKey").addEventListener("click",()=>{ keyEl.value="";
   document.getElementById("iosClose").addEventListener("click",()=>help.classList.add("hide"));
   help.addEventListener("click",e=>{ if(e.target===help) help.classList.add("hide"); });
 })();
+/* ---------- PDF Gendarmería ---------- */
+function loadScript(src){ return new Promise((ok,ko)=>{ const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=ko; document.head.appendChild(s); }); }
+async function getJsPDF(){
+  if(window.jspdf) return window.jspdf.jsPDF;
+  try{ await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"); }
+  catch(e){ await loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"); }
+  return window.jspdf.jsPDF;
+}
+function buildGendPdf(jsPDF, r, fechaTxt){
+  const E=r.E,S=r.S, doc=new jsPDF({unit:"mm",format:"a4"});
+  const navy=[31,42,68], red=[198,40,40], light=[253,236,234];
+  doc.setFillColor(...navy); doc.rect(0,0,210,28,"F");
+  doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(18);
+  doc.text("NÚMEROS PARA GENDARMERÍA",105,14,{align:"center"});
+  doc.setFont("helvetica","normal"); doc.setFontSize(11);
+  doc.text("Paso San Sebastián (Ushuaia)  ·  Fecha: "+fechaTxt,105,22,{align:"center"});
+  const x0=20, wL=42, wC=32, h=11; let y=42;
+  const cell=(x,y,w,txt,o={})=>{
+    if(o.fill){ doc.setFillColor(...o.fill); doc.rect(x,y,w,h,"F"); }
+    doc.setDrawColor(150); doc.rect(x,y,w,h);
+    doc.setTextColor(...(o.color||[20,20,20])); doc.setFont("helvetica",o.bold?"bold":"normal"); doc.setFontSize(o.size||12);
+    doc.text(String(txt),o.left?x+3:x+w/2,y+h/2+1.6,{align:o.left?"left":"center"});
+  };
+  cell(x0,y,wL,"",{fill:navy}); cell(x0+wL,y,wC*2,"VEHÍCULOS",{fill:navy,color:[255,255,255],bold:1}); cell(x0+wL+wC*2,y,wC*2,"PASAJEROS",{fill:navy,color:[255,255,255],bold:1});
+  y+=h; cell(x0,y,wL,"",{fill:navy});
+  ["ENTRADA","SALIDA","ENTRADA","SALIDA"].forEach((t,i)=>cell(x0+wL+wC*i,y,wC,t,{fill:navy,color:[255,255,255],bold:1,size:10}));
+  const rows=[["AUTO",E.vAuto,S.vAuto,E.pAuto,S.pAuto],["BUS",E.vBus,S.vBus,E.pBus,S.pBus],["CAMIÓN",E.vCam,S.vCam,E.pCam,S.pCam],
+              ["OTROS","","",E.pOtros,S.pOtros],["TOTAL",E.vTot,S.vTot,E.pTot,S.pTot]];
+  rows.forEach((rw,ri)=>{ y+=h; const tot=ri===rows.length-1;
+    cell(x0,y,wL,rw[0],{fill:tot?red:[240,242,246],color:tot?[255,255,255]:[20,20,20],bold:1,left:1});
+    rw.slice(1).forEach((v,i)=>cell(x0+wL+wC*i,y,wC,v,{fill:tot?red:light,color:tot?[255,255,255]:[90,15,15],bold:1,size:13}));
+  });
+  doc.setTextColor(120); doc.setFont("helvetica","normal"); doc.setFontSize(9);
+  doc.text("Migraciones · Delegación Tierra del Fuego · Fuente: S.I.Ca.M.",105,y+h+12,{align:"center"});
+  return doc;
+}
+document.getElementById("btnPdf").addEventListener("click",async()=>{
+  const b=document.getElementById("btnPdf"); b.disabled=true; const old=b.textContent; b.textContent="Generando…";
+  try{
+    const jsPDF=await getJsPDF();
+    const [y,m,d]=state.fecha.split("-");
+    const doc=buildGendPdf(jsPDF, calc(), d+"/"+m+"/"+y);
+    const name="Gendarmeria_"+d+"-"+m+"-"+y+".pdf";
+    const blob=doc.output("blob");
+    let dl=null; try{ if(window.claude && claude.use) dl=await claude.use("downloads"); }catch(e){}
+    if(dl){
+      try{ await dl.save({filename:name,data:blob}); toast("PDF guardado"); }
+      catch(e){ if(e && e.code!=="declined") toast("No se pudo guardar el PDF"); }
+    } else {
+      const file=new File([blob],name,{type:"application/pdf"});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        try{ await navigator.share({files:[file],title:"Números para Gendarmería"}); }catch(e){}
+      } else {
+        const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href),5000); toast("PDF descargado");
+      }
+    }
+  }catch(e){ toast("No se pudo generar el PDF (¿sin internet?)"); }
+  b.disabled=false; b.textContent=old;
+});
 /* ---------- render general ---------- */
 function renderAll(){ bindInputs(); renderColectivos(); refresh(); }
 renderAll();
