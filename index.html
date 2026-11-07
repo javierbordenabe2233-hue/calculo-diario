@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cálculo diario · San Sebastián</title>
+<style>
+  :root{
+    --navy:#1f2a44; --navy2:#2d3b5c; --red:#c62828; --redbg:#fdecea;
+    --bg:#f4f5f8; --card:#fff; --line:#d9dde6; --muted:#6b7280; --ok:#2e7d32; --warn:#b26a00;
+    --in:#fffdf3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:#1b1f2a;font-size:15px}
+  header{background:var(--navy);color:#fff;padding:14px 16px 0}
+  header h1{margin:0;font-size:18px;letter-spacing:.3px}
+  header .sub{font-size:12.5px;opacity:.8;margin-top:2px}
+  .toprow{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .toprow label{font-size:12px;opacity:.85}
+  .toprow input{border:0;border-radius:6px;padding:6px 8px;font:inherit}
+  nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto}
+  nav button{background:transparent;color:#cfd6e6;border:0;padding:10px 14px;font:inherit;font-weight:600;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+  nav button.on{color:#fff;border-bottom-color:#e53935}
+  main{max-width:1100px;margin:0 auto;padding:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:15px;text-transform:uppercase;letter-spacing:.4px;color:var(--navy)}
+  .hint{color:var(--muted);font-size:13px;line-height:1.45}
+  .btn{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer}
+  .btn.red{background:var(--red)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .btn.sm{padding:6px 10px;font-size:13px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .drop{border:2px dashed #b9c0cf;border-radius:10px;padding:22px;text-align:center;background:#fafbfd}
+  .drop.over{border-color:var(--red);background:var(--redbg)}
+  .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:12px}
+  .ph{display:flex;gap:10px;border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff;align-items:flex-start}
+  .ph img{width:76px;height:56px;object-fit:cover;border-radius:4px;flex:none;background:#eee}
+  .ph .t{font-size:13px;line-height:1.35;flex:1;min-width:0}
+  .ph .s{font-weight:700}
+  .ph .s.ok{color:var(--ok)} .ph .s.err{color:var(--red)} .ph .s.wait{color:var(--muted)} .ph .s.warn{color:var(--warn)}
+  .ph .x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:16px}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  table{border-collapse:collapse;width:100%}
+  th,td{border:1px solid var(--line);padding:5px 6px;text-align:center;font-size:13.5px}
+  th{background:var(--navy);color:#fff;font-weight:600;font-size:12.5px}
+  td.l{text-align:left;font-weight:600;background:#f7f8fb}
+  td.calc{background:var(--redbg);font-weight:700;color:#7a1414}
+  td.tot{background:var(--red);color:#fff;font-weight:700}
+  input.n{width:100%;min-width:52px;border:1px solid #e3d9a8;background:var(--in);border-radius:4px;padding:5px 4px;text-align:center;font:inherit;font-size:14px}
+  input.n:focus{outline:2px solid #e53935;border-color:transparent}
+  input.p{width:100%;min-width:80px;border:1px solid var(--line);border-radius:4px;padding:5px 4px;font:inherit;font-size:13px;text-transform:uppercase}
+  .del{background:none;border:0;color:var(--red);cursor:pointer;font-size:16px;padding:0 4px}
+  .chk{font-size:12.5px;margin-top:6px}
+  .chk.ok{color:var(--ok)} .chk.bad{color:var(--warn)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .est td:first-child{width:34px;color:var(--muted);background:#f1f2f6}
+  .est tr.hd td{background:var(--navy);color:#fff;font-weight:700}
+  .est td.v{font-weight:700;font-size:14.5px;text-align:right;padding-right:12px}
+  .est td.c{font-size:12px}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1b1f2a;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+  .toast.on{opacity:1}
+  textarea.fallback{width:100%;height:120px;margin-top:8px;font-family:ui-monospace,monospace;font-size:13px}
+  .warnbox{background:#fff6e0;border:1px solid #f0d58a;border-radius:8px;padding:10px;font-size:13px;margin-top:10px}
+  .tabs2{display:flex;gap:6px;margin-bottom:10px}
+  .pill{border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 12px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
+  .pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Cálculo de entrada y salida</h1>
+  <div class="sub">Paso San Sebastián · lectura de pantallas S.I.Ca.M.</div>
+  <div class="toprow">
+    <label>Fecha <input type="date" id="fecha"></label>
+    <button class="btn sm ghost" id="btnNuevo" style="padding:6px 10px">Nuevo día</button>
+  </div>
+  <nav id="nav">
+    <button data-v="fotos" class="on">1 · Fotos</button>
+    <button data-v="carga">2 · Carga de datos</button>
+    <button data-v="est">3 · Lista estadística</button>
+    <button data-v="ajustes">Ajustes</button>
+  </nav>
+</header>
+
+<main>
+  <!-- FOTOS -->
+  <section id="v-fotos">
+    <div class="card">
+      <h2>Subí las fotos del S.I.Ca.M.</h2>
+      <p class="hint">Sacá una foto de cada pantalla, en <b>Entrada</b> y en <b>Salida</b>:</p>
+      <ul class="hint" style="margin:4px 0 10px;padding-left:18px">
+        <li>Pestaña <b>Compañías</b> (personas por compañía).</li>
+        <li>Pestaña <b>Vehículos</b> de: Particular, Tránsito Arg. C, Tránsito Arg. P, Transporte de carga y Transporte de pasajeros.</li>
+        <li>Las dos pantallas de <b>caminantes</b>.</li>
+      </ul>
+      <div class="drop" id="drop">
+        <input type="file" id="file" accept="image/*" multiple class="hide">
+        <button class="btn red" id="btnFile">📷 Elegir o sacar fotos</button>
+        <div class="hint" style="margin-top:8px">Podés subir varias juntas. Se leen de a una.</div>
+      </div>
+      <div id="aiOff" class="warnbox hide">La lectura automática de fotos no está activada. Cargá tu clave de API de Anthropic en <b>Ajustes</b>, o cargá todo a mano en <b>Carga de datos</b>.</div>
+      <div class="photos" id="photos"></div>
+    </div>
+  </section>
+
+  <!-- CARGA -->
+  <section id="v-carga" class="hide">
+    <div class="grid2">
+      <div class="card">
+        <h2>Particulares</h2>
+        <table><tr><th></th><th>Personas</th><th>Vehículos</th></tr>
+          <tr><td class="l">Entrada</td><td><input class="n" data-k="E.partPers"></td><td><input class="n" data-k="E.partVeh"></td></tr>
+          <tr><td class="l">Salida</td><td><input class="n" data-k="S.partPers"></td><td><input class="n" data-k="S.partVeh"></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h2>Camiones argentinos (TAA C)</h2>
+        <table><tr><th></th><th>Personas</th><th>Vehículos</th></tr>
+          <tr><td class="l">Entrada</td><td><input class="n" data-k="E.camArgPers"></td><td><input class="n" data-k="E.camArgVeh"></td></tr>
+          <tr><td class="l">Salida</td><td><input class="n" data-k="S.camArgPers"></td><td><input class="n" data-k="S.camArgVeh"></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h2>Camiones chilenos (TDC)</h2>
+        <table><tr><th></th><th>Personas</th><th>Vehículos</th></tr>
+          <tr><td class="l">Entrada</td><td><input class="n" data-k="E.camChlPers"></td><td><input class="n" data-k="E.camChlVeh"></td></tr>
+          <tr><td class="l">Salida</td><td><input class="n" data-k="S.camChlPers"></td><td><input class="n" data-k="S.camChlVeh"></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h2>Caminantes</h2>
+        <table><tr><th></th><th>Personas</th></tr>
+          <tr><td class="l">Entrada</td><td><input class="n" data-k="E.caminantes"></td></tr>
+          <tr><td class="l">Salida</td><td><input class="n" data-k="S.caminantes"></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid2" id="colectivos"></div>
+
+    <div class="card">
+      <h2>Resumen (como en la planilla)</h2>
+      <div class="grid2" id="resumen"></div>
+    </div>
+  </section>
+
+  <!-- ESTADISTICO -->
+  <section id="v-est" class="hide">
+    <div class="card">
+      <h2>Lista para el Excel</h2>
+      <p class="hint">Columna en el mismo orden que la <b>Planilla p. estadístico mensual</b> (filas 1 a 29). Copiala y pegala en la primera celda de la columna del día, en tu Excel.</p>
+      <div class="row" style="margin:10px 0">
+        <button class="btn red" id="cpAll">Copiar filas 1–29 (con fechas)</button>
+        <button class="btn ghost" id="cpNum">Copiar solo los números</button>
+      </div>
+      <textarea class="fallback hide" id="fallback" readonly></textarea>
+      <table class="est" id="estTable"></table>
+    </div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section id="v-ajustes" class="hide">
+    <div class="card" style="max-width:460px">
+      <h2>Tasas</h2>
+      <table>
+        <tr><th>Concepto</th><th>$ por vehículo</th></tr>
+        <tr><td class="l">Camión chileno (TDC)</td><td><input class="n" data-k="tasaCarga"></td></tr>
+        <tr><td class="l">Colectivo chileno (TDP)</td><td><input class="n" data-k="tasaPas"></td></tr>
+      </table>
+      <p class="hint" style="margin-top:10px">Las tasas quedan guardadas en este navegador para los días siguientes.</p>
+    </div>
+    <div class="card" style="max-width:460px">
+      <h2>Lectura de fotos</h2>
+      <p class="hint">Para leer las fotos, la app usa Claude. Pegá acá una clave de API de Anthropic (empieza con <code>sk-ant-</code>). Se guarda sólo en este navegador y se usa sólo para leer las fotos.</p>
+      <input type="password" id="apikey" placeholder="sk-ant-..." style="width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;font:inherit;margin:6px 0">
+      <div class="row"><button class="btn sm" id="saveKey">Guardar clave</button><button class="btn sm ghost" id="delKey">Borrar</button></div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- estado ---------- */
+const DIR = ["E","S"];
+const emptyDir = () => ({partPers:null,partVeh:null,camArgPers:null,camArgVeh:null,camChlPers:null,camChlVeh:null,caminantes:null,
+  colChl:[],colArg:[], chk:{tdp:null,taaP:null,colChlN:null,colArgN:null}});
+const today = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
+let state = {fecha:today(), tasaCarga:1000, tasaPas:6000, E:emptyDir(), S:emptyDir()};
+const store = {
+  get(k){ try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;} },
+  set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+};
+(function load(){
+  const s = store.get("ss-dia");
+  if(s && s.E && s.S) state = Object.assign(state, s);
+  const t = store.get("ss-tasas");
+  if(t){ if(t.c!=null) state.tasaCarga=t.c; if(t.p!=null) state.tasaPas=t.p; }
+})();
+function save(){ store.set("ss-dia",state); store.set("ss-tasas",{c:state.tasaCarga,p:state.tasaPas}); }
+
+const num = v => (v===null||v===undefined||v===""||isNaN(+v)) ? 0 : +v;
+function getK(k){ return k.split(".").reduce((o,p)=>o==null?o:o[p], state); }
+function setK(k,v){ const ps=k.split("."); let o=state; for(let i=0;i<ps.length-1;i++) o=o[ps[i]]; o[ps.at(-1)]=v; }
+
+/* ---------- cálculos ---------- */
+function calc(){
+  const r = {};
+  for(const d of DIR){
+    const x = state[d];
+    const nChl = x.colChl.length, nArg = x.colArg.length;
+    const paxChl = x.colChl.reduce((a,b)=>a+num(b.pax),0), tripChl = x.colChl.reduce((a,b)=>a+num(b.trip),0);
+    const paxArg = x.colArg.reduce((a,b)=>a+num(b.pax),0), tripArg = x.colArg.reduce((a,b)=>a+num(b.trip),0);
+    const vAuto=num(x.partVeh), vBus=nChl+nArg, vCam=num(x.camArgVeh)+num(x.camChlVeh);
+    const pAuto=num(x.partPers), pBus=paxChl+paxArg, pCam=num(x.camArgPers)+num(x.camChlPers), pOtros=num(x.caminantes);
+    const vTot=vAuto+vBus+vCam, pTot=pAuto+pBus+pCam+pOtros;
+    const trip = pCam + tripChl + tripArg;
+    r[d] = {nChl,nArg,paxChl,tripChl,paxArg,tripArg,vAuto,vBus,vCam,vTot,pAuto,pBus,pCam,pOtros,pTot,
+      ingPas:pTot-trip, ingTrip:trip, ingVeh:vTot,
+      tasaCol:nChl*num(state.tasaPas), tasaTdc:num(x.camChlVeh)*num(state.tasaCarga),
+      camArgVeh:num(x.camArgVeh), camChlVeh:num(x.camChlVeh), camArgPers:num(x.camArgPers), camChlPers:num(x.camChlPers),
+      partVeh:vAuto, partPers:pAuto, cam:pOtros};
+  }
+  return r;
+}
+const fmt = n => n.toLocaleString("es-AR");
+const money = n => "$ " + n.toLocaleString("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function fechaCorta(){ const [y,m,d]=state.fecha.split("-"); return d+"-"+MES[+m-1]; }
+
+/* ---------- navegación ---------- */
+document.getElementById("nav").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll("main>section").forEach(s=>s.classList.toggle("hide", s.id!=="v-"+b.dataset.v));
+  window.scrollTo(0,0);
+});
+
+/* ---------- inputs simples ---------- */
+function bindInputs(root=document){
+  root.querySelectorAll("input.n[data-k]").forEach(inp=>{
+    inp.inputMode="numeric";
+    const v=getK(inp.dataset.k); inp.value = (v==null?"":v);
+    if(inp._b) return; inp._b=1;
+    inp.addEventListener("input",()=>{
+      const t=inp.value.replace(/[^\d]/g,""); setK(inp.dataset.k, t===""?null:+t); save(); refresh();
+    });
+  });
+}
+const fechaEl=document.getElementById("fecha");
+fechaEl.value=state.fecha;
+fechaEl.addEventListener("change",()=>{ state.fecha=fechaEl.value||today(); save(); refresh(); });
+document.getElementById("btnNuevo").addEventListener("click",()=>{
+  const b=document.getElementById("btnNuevo");
+  if(b.dataset.c!=="1"){ b.dataset.c="1"; b.textContent="¿Borrar todo? Tocá de nuevo"; setTimeout(()=>{b.dataset.c="";b.textContent="Nuevo día";},3500); return; }
+  b.dataset.c=""; b.textContent="Nuevo día";
+  state.E=emptyDir(); state.S=emptyDir(); state.fecha=today(); fechaEl.value=state.fecha;
+  photos.length=0; renderPhotos(); save(); renderAll(); toast("Planilla en blanco");
+});
+
+/* ---------- colectivos ---------- */
+const COL = [
+  {key:"colChl", d:"E", t:"Colectivos Chile · Entrada", chk:"tdp", cls:"red"},
+  {key:"colArg", d:"E", t:"Colectivos ARG · Entrada", chk:"taaP"},
+  {key:"colChl", d:"S", t:"Colectivos Chile · Salida", chk:"tdp"},
+  {key:"colArg", d:"S", t:"Colectivos ARG · Salida", chk:"taaP"},
+];
+function renderColectivos(){
+  const host=document.getElementById("colectivos"); host.innerHTML="";
+  COL.forEach((c,ci)=>{
+    const list=state[c.d][c.key];
+    const card=document.createElement("div"); card.className="card";
+    let h=`<h2>${c.t}</h2><table><tr><th>#</th><th>Patente</th><th>PAX (total)</th><th>TRIP</th><th></th></tr>`;
+    list.forEach((b,i)=>{
+      h+=`<tr><td>${i+1}</td><td><input class="p" data-ci="${ci}" data-i="${i}" data-f="patente" value="${(b.patente||"").replace(/"/g,"")}"></td>
+      <td><input class="n" inputmode="numeric" data-ci="${ci}" data-i="${i}" data-f="pax" value="${b.pax??""}"></td>
+      <td><input class="n" inputmode="numeric" data-ci="${ci}" data-i="${i}" data-f="trip" value="${b.trip??""}"></td>
+      <td><button class="del" data-ci="${ci}" data-i="${i}" title="Quitar">✕</button></td></tr>`;
+    });
+    h+=`<tr><td class="tot">${list.length}</td><td class="tot">CANT</td><td class="tot" data-sum="pax${ci}"></td><td class="tot" data-sum="trip${ci}"></td><td></td></tr></table>
+      <div class="row" style="margin-top:8px"><button class="btn sm ghost" data-add="${ci}">+ Agregar micro</button>
+      <button class="btn sm ghost" data-copy="${ci}">Copiar PAX/TRIP</button></div>
+      <div class="chk" data-chk="${ci}"></div>`;
+    card.innerHTML=h; host.appendChild(card);
+  });
+  host.querySelectorAll("input[data-ci]").forEach(inp=>inp.addEventListener("input",()=>{
+    const c=COL[+inp.dataset.ci], b=state[c.d][c.key][+inp.dataset.i];
+    if(inp.dataset.f==="patente") b.patente=inp.value.toUpperCase();
+    else { const t=inp.value.replace(/[^\d]/g,""); b[inp.dataset.f]= t===""?null:+t; }
+    save(); refresh();
+  }));
+  host.querySelectorAll("button.del").forEach(bt=>bt.addEventListener("click",()=>{
+    const c=COL[+bt.dataset.ci]; state[c.d][c.key].splice(+bt.dataset.i,1); save(); renderAll();
+  }));
+  host.querySelectorAll("[data-add]").forEach(bt=>bt.addEventListener("click",()=>{
+    const c=COL[+bt.dataset.add]; state[c.d][c.key].push({patente:"",pax:null,trip:2}); save(); renderAll();
+  }));
+  host.querySelectorAll("[data-copy]").forEach(bt=>bt.addEventListener("click",()=>{
+    const c=COL[+bt.dataset.copy];
+    copy(state[c.d][c.key].map(b=>num(b.pax)+"\t"+num(b.trip)).join("\n"), "PAX y TRIP copiados");
+  }));
+}
+
+/* ---------- resumen ---------- */
+function tbl(title, rows, head=["","ENTRADA","SALIDA"]){
+  let h=`<table><tr><th>${title}</th>${head.slice(1).map(x=>`<th>${x}</th>`).join("")}</tr>`;
+  rows.forEach(r=>{ h+=`<tr><td class="l">${r[0]}</td>${r.slice(1).map((v,i)=>`<td class="${r.tot?'tot':'calc'}">${v}</td>`).join("")}</tr>`; if(false){} });
+  return h+"</table>";
+}
+function refresh(){
+  const r=calc(), E=r.E, S=r.S;
+  // sumas colectivos y chequeos
+  COL.forEach((c,ci)=>{
+    const list=state[c.d][c.key], x=state[c.d];
+    const pax=list.reduce((a,b)=>a+num(b.pax),0), trip=list.reduce((a,b)=>a+num(b.trip),0);
+    const ps=document.querySelector(`[data-sum="pax${ci}"]`), ts=document.querySelector(`[data-sum="trip${ci}"]`);
+    if(ps) ps.textContent=pax; if(ts) ts.textContent=trip;
+    const el=document.querySelector(`[data-chk="${ci}"]`); if(!el) return;
+    const msgs=[]; let bad=false;
+    const comp=x.chk[c.chk];
+    if(comp!=null){ if(comp===pax) msgs.push(`✓ Coincide con Compañías (${comp} personas)`); else {bad=true; msgs.push(`⚠ Compañías dice ${comp} personas y la suma da ${pax}`);} }
+    const n=x.chk[c.key==="colChl"?"colChlN":"colArgN"];
+    if(n!=null && n!==list.length){ bad=true; msgs.push(`⚠ El SICaM indica ${n} micros y hay ${list.length} cargados: falta una foto con el resto de la lista`); }
+    el.textContent=msgs.join(" · "); el.className="chk "+(bad?"bad":"ok");
+  });
+  const t = (rows)=>rows;
+  const v = [["AUTO",E.vAuto,S.vAuto],["BUS",E.vBus,S.vBus],["CAMION",E.vCam,S.vCam],["OTROS","",""]];
+  const vt=["TOTAL",E.vTot,S.vTot]; vt.tot=1; v.push(vt);
+  const p = [["AUTO",E.pAuto,S.pAuto],["BUS",E.pBus,S.pBus],["CAMION",E.pCam,S.pCam],["OTROS",E.pOtros,S.pOtros]];
+  const pt=["TOTAL",E.pTot,S.pTot]; pt.tot=1; p.push(pt);
+  const ie=[["PASAJEROS",E.ingPas,S.ingPas],["TRIPULANTES",E.ingTrip,S.ingTrip],["VEHICULOS",E.ingVeh,S.ingVeh]];
+  const rec=[["COLECTIVOS",fmt(E.tasaCol),fmt(S.tasaCol)],["TDC",fmt(E.tasaTdc),fmt(S.tasaTdc)]];
+  const rt=["TOTAL",fmt(E.tasaCol+E.tasaTdc),fmt(S.tasaCol+S.tasaTdc)]; rt.tot=1; rec.push(rt);
+  const gen=E.tasaCol+E.tasaTdc+S.tasaCol+S.tasaTdc;
+  let gend=`<table><tr><th colspan="5" style="background:var(--red);font-size:13.5px">NÚMEROS PARA GENDARMERÍA</th></tr>
+    <tr><th rowspan="2"></th><th colspan="2">VEHÍCULOS</th><th colspan="2">PASAJEROS</th></tr>
+    <tr><th>ENTRADA</th><th>SALIDA</th><th>ENTRADA</th><th>SALIDA</th></tr>`;
+  v.forEach((rv,i)=>{ const rp=p[i], c=rv.tot?'tot':'calc';
+    gend+=`<tr><td class="l">${rv[0]}</td><td class="${c}">${rv[1]}</td><td class="${c}">${rv[2]}</td><td class="${c}">${rp[1]}</td><td class="${c}">${rp[2]}</td></tr>`; });
+  gend+="</table>";
+  document.getElementById("resumen").innerHTML =
+    `<div style="grid-column:1/-1">${gend}</div>
+     <div><table><tr><th colspan="3" style="background:var(--red);font-size:13.5px">PARA PLANILLA DIARIA</th></tr></table>${tbl("",ie,["","INGRESOS","EGRESOS"])}</div>
+     <div>${tbl("TOTAL RECAUDADO",rec)}<table style="margin-top:-1px"><tr><td class="l">GENERAL</td><td class="tot">${money(gen)}</td></tr></table></div>`;
+  renderEst(r);
+}
+
+/* ---------- lista estadística ---------- */
+function estRows(r){
+  const E=r.E,S=r.S, f=fechaCorta();
+  return [
+    {h:1,a:"",b:"",v:f},
+    {a:"Vehículos de carga (TAA)",b:"Ingresos",v:E.camArgVeh},{a:"",b:"Egresos",v:S.camArgVeh},
+    {a:"Vehículos de carga (TDC)",b:"Ingresos",v:E.camChlVeh},{a:"",b:"Egresos",v:S.camChlVeh},
+    {a:"Vehículos de pasajeros (TAA)",b:"Ingresos",v:E.nArg},{a:"",b:"Egresos",v:S.nArg},
+    {a:"Vehículos de pasajeros (CHL)",b:"Ingresos",v:E.nChl},{a:"",b:"Egresos",v:S.nChl},
+    {a:"Vehículos particulares (autos/motos)",b:"Ingresos",v:E.partVeh},{a:"",b:"Egresos",v:S.partVeh},
+    {h:1,a:"MOV CANT PASAJEROS",b:"CONDICIÓN",v:f},
+    {a:"Cantidad tripulantes (TAA)",b:"Ingresos",v:E.camArgPers+E.tripArg},{a:"",b:"Egresos",v:S.camArgPers+S.tripArg},
+    {a:"Cantidad tripulantes (CHL)",b:"Ingresos",v:E.camChlPers+E.tripChl},{a:"",b:"Egresos",v:S.camChlPers+S.tripChl},
+    {a:"Cant. pasajeros micros/ómnibus (TAA)",b:"Ingresos",v:E.paxArg-E.tripArg},{a:"",b:"Egresos",v:S.paxArg-S.tripArg},
+    {a:"Cantidad de pasajeros CHL",b:"Ingresos",v:E.paxChl-E.tripChl},{a:"",b:"Egresos",v:S.paxChl-S.tripChl},
+    {a:"Vehículos particulares (autos/motos)",b:"Ingresos",v:E.partPers},{a:"",b:"Egresos",v:S.partPers},
+    {a:"Peatones",b:"Ingresos",v:E.cam},{a:"",b:"Egresos",v:S.cam},
+    {h:1,a:"TASAS",b:"CONDICIÓN",v:f},
+    {a:"Transportes de carga",b:"Ingresos",v:E.tasaTdc,m:1},{a:"",b:"Egresos",v:S.tasaTdc,m:1},
+    {a:"Transportes de pasajeros",b:"Ingresos",v:E.tasaCol,m:1},{a:"",b:"Egresos",v:S.tasaCol,m:1},
+  ];
+}
+let lastEst=[];
+function renderEst(r){
+  lastEst=estRows(r);
+  document.getElementById("estTable").innerHTML = lastEst.map((x,i)=>
+    `<tr class="${x.h?'hd':''}"><td>${i+1}</td><td class="c" style="text-align:left">${x.a}</td><td class="c">${x.b}</td><td class="v">${x.h?x.v:(x.m?money(x.v):fmt(x.v))}</td></tr>`).join("");
+}
+document.getElementById("cpAll").addEventListener("click",()=>copy(lastEst.map(x=>x.v).join("\n"),"Copiadas las 29 filas"));
+document.getElementById("cpNum").addEventListener("click",()=>copy(lastEst.filter(x=>!x.h).map(x=>x.v).join("\n"),"Copiados los 26 números"));
+
+/* ---------- copiar ---------- */
+let toastT;
+function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),2200); }
+async function copy(text,msg){
+  const fb=document.getElementById("fallback");
+  try{ await navigator.clipboard.writeText(text); fb.classList.add("hide"); toast(msg); }
+  catch(e){ fb.value=text; fb.classList.remove("hide"); fb.focus(); fb.select(); toast("Seleccioné el texto: copialo con Ctrl+C"); }
+}
+
+/* ---------- fotos + lectura con Claude ---------- */
+const photos=[]; let sample=null, busy=false;
+const PROMPT = `Sos un lector de capturas del sistema S.I.Ca.M. de Migraciones Argentina (ventana "Administración de tránsitos"). La imagen es una foto de celular a un monitor; puede verse torcida o con reflejos.
+Devolvé SOLO un objeto JSON, sin texto adicional, con esta forma:
+{
+ "pantalla": "companias" | "vehiculos" | "transitos" | "caminantes" | "otra",
+ "direccion": "entrada" | "salida" | "ambas" | null,
+ "compania": "particular" | "taa_carga" | "taa_pasajeros" | "tdc" | "tdp" | null,
+ "contador": número o null,
+ "companias": [{"nombre": "texto", "etiqueta": "texto", "total": número}],
+ "vehiculos": [{"patente": "texto", "total": número}],
+ "caminantes": número o null,
+ "confianza": "alta" | "media" | "baja",
+ "nota": "texto breve"
+}
+Reglas:
+- "pantalla": la pestaña activa (resaltada en naranja) entre Compañías, Vehículos y Tránsitos. Si es una pantalla de peatones/caminantes usá "caminantes".
+- "direccion": la casilla tildada arriba (Entrada, Salida o Entrada - Salida = "ambas").
+- "compania": según el título grande en negrita: PARTICULAR → "particular"; TRANSITO ARGENTINA ARGENTINA C (termina en C) → "taa_carga"; TRANSITO ARGENTINA ARGENTINA P (termina en P) → "taa_pasajeros"; TRANSPORTE DE CARGA → "tdc"; TRANSPORTE DE PASAJEROS → "tdp".
+- "contador": el número que va después de la barra en el contador abajo a la izquierda de la grilla ("1/46" → 46).
+- "companias": solo en la pestaña Compañías: cada fila en orden de arriba hacia abajo, con la columna "Total".
+- "vehiculos": solo en la pestaña Vehículos: TODAS las filas visibles en orden, con su patente y la columna "Total". Vacío si no aplica.
+- "caminantes": solo en pantallas de peatones/caminantes: total de personas (usá el contador "1/N" o "Totales consultados").
+- No incluyas nombres ni números de documento de personas.`;
+
+(async()=>{
+  try{ if(window.claude && claude.use){ sample=await claude.use("sample"); } }catch(e){ sample=null; }
+  if(sample){ try{ const l=await sample.limits(); if(!l || !l.images) sample=null; }catch(e){} }
+  updAiOff();
+})();
+function apiKey(){ return (store.get("ss-apikey")||"").trim(); }
+function canRead(){ return !!sample || !!apiKey(); }
+function updAiOff(){ document.getElementById("aiOff").classList.toggle("hide", canRead()); }
+async function blobB64(blob){ const buf=new Uint8Array(await blob.arrayBuffer()); let s=""; for(let i=0;i<buf.length;i+=0x8000) s+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000)); return btoa(s); }
+async function readImage(blob){
+  if(sample){ const res=await sample(PROMPT,{images:[blob], modelTier:"default", cache:false}); return res.text||""; }
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{
+      "content-type":"application/json","x-api-key":apiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-sonnet-5-5",max_tokens:2000,messages:[{role:"user",content:[
+      {type:"image",source:{type:"base64",media_type:"image/jpeg",data:await blobB64(blob)}},{type:"text",text:PROMPT}]}]})});
+  if(!r.ok){ const e=new Error("api "+r.status); e.code = r.status===401?"bad_key": r.status===429?"rate_limited":"api"; throw e; }
+  const j=await r.json(); return (j.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("");
+}
+
+const fileEl=document.getElementById("file"), drop=document.getElementById("drop");
+document.getElementById("btnFile").addEventListener("click",()=>fileEl.click());
+fileEl.addEventListener("change",()=>{ addFiles([...fileEl.files]); fileEl.value=""; });
+drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("over");});
+drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
+drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("over");addFiles([...e.dataTransfer.files].filter(f=>f.type.startsWith("image/")));});
+
+async function prep(file){
+  const bmp=await createImageBitmap(file);
+  const sc=Math.min(1,1800/Math.max(bmp.width,bmp.height));
+  const c=document.createElement("canvas"); c.width=Math.round(bmp.width*sc); c.height=Math.round(bmp.height*sc);
+  c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+  const blob=await new Promise(r=>c.toBlob(r,"image/jpeg",0.85));
+  const t=document.createElement("canvas"); const ts=160/Math.max(c.width,c.height); t.width=c.width*ts; t.height=c.height*ts;
+  t.getContext("2d").drawImage(c,0,0,t.width,t.height);
+  return {blob, thumb:t.toDataURL("image/jpeg",0.7)};
+}
+async function addFiles(files){
+  for(const f of files){
+    const p={id:Math.random().toString(36).slice(2), name:f.name, status:"wait", msg:"En espera…", file:f};
+    try{ const r=await prep(f); p.blob=r.blob; p.thumb=r.thumb; }catch(e){ p.status="err"; p.msg="No se pudo abrir la imagen"; }
+    photos.push(p);
+  }
+  renderPhotos(); processQueue();
+}
+async function processQueue(){
+  if(busy) return; busy=true;
+  while(true){
+    const p=photos.find(x=>x.status==="wait"); if(!p) break;
+    if(!canRead()){ p.status="err"; p.msg="Lectura automática no disponible: configurá la clave en la pestaña Ajustes o cargá los datos a mano."; renderPhotos(); continue; }
+    p.status="run"; p.msg="Leyendo…"; renderPhotos();
+    try{
+      const txt=await readImage(p.blob); const a=txt.indexOf("{"), b=txt.lastIndexOf("}");
+      if(a<0||b<0) throw new Error("respuesta sin datos");
+      const data=JSON.parse(txt.slice(a,b+1));
+      p.data=data; const out=apply(data); p.status=out.ok?(out.warn?"warn":"ok"):"err"; p.msg=out.msg;
+    }catch(e){
+      p.status="err";
+      p.msg = e && e.code==="not_granted" ? "Sin permiso para leer fotos. Cargá a mano." :
+              e && e.code==="bad_key" ? "La clave de API no es válida. Revisala en Ajustes." :
+              e && e.code==="rate_limited" ? "Demasiadas lecturas seguidas. Esperá un momento y reintentá." :
+              "No se pudo leer. Reintentá o cargá a mano.";
+      if(e && e.code==="not_granted"){ sample=null; updAiOff(); }
+      if(e && e.code==="rate_limited"){ renderPhotos(); break; }
+    }
+    renderPhotos(); save(); renderAll();
+  }
+  busy=false;
+}
+function renderPhotos(){
+  const host=document.getElementById("photos");
+  host.innerHTML=photos.map(p=>`<div class="ph"><img src="${p.thumb||""}" alt="">
+    <div class="t"><div class="s ${p.status==="run"?"wait":p.status}">${{wait:"En espera",run:"Leyendo…",ok:"✓ Leída",warn:"⚠ Revisar",err:"✕ Error"}[p.status]}</div>
+    <div>${p.msg}</div>
+    ${(p.status==="err"||p.status==="warn")&&p.blob?`<button class="btn sm ghost" style="margin-top:6px" data-retry="${p.id}">Volver a leer</button>`:""}</div>
+    <button class="x" data-rm="${p.id}" title="Quitar">✕</button></div>`).join("");
+  host.querySelectorAll("[data-retry]").forEach(b=>b.addEventListener("click",()=>{ const p=photos.find(x=>x.id===b.dataset.retry); p.status="wait"; p.msg="En espera…"; renderPhotos(); processQueue(); }));
+  host.querySelectorAll("[data-rm]").forEach(b=>b.addEventListener("click",()=>{ const i=photos.findIndex(x=>x.id===b.dataset.rm); photos.splice(i,1); renderPhotos(); }));
+}
+
+const NOMBRE={particular:"Particular",taa_carga:"Tránsito Arg. C",taa_pasajeros:"Tránsito Arg. P",tdc:"Transporte de carga",tdp:"Transporte de pasajeros"};
+function toN(v){ const n=parseInt(String(v??"").replace(/[^\d]/g,""),10); return isNaN(n)?null:n; }
+function mergeBuses(list, rows){
+  rows.forEach(r=>{
+    const pat=String(r.patente||"").toUpperCase().replace(/\s/g,""); const pax=toN(r.total);
+    const ex=pat && list.find(b=>b.patente===pat);
+    if(ex){ if(pax!=null) ex.pax=pax; } else list.push({patente:pat,pax,trip:2});
+  });
+}
+function apply(d){
+  const dir = d.direccion==="entrada"?"E":d.direccion==="salida"?"S":null;
+  const dl = dir==="E"?"Entrada":"Salida";
+  const low = d.confianza==="baja";
+  if(d.pantalla==="transitos") return {ok:false,msg:"Es la pestaña Tránsitos (datos personales). No hace falta: usá Compañías o Vehículos."};
+  if(d.pantalla==="caminantes"){
+    if(!dir) return {ok:false,msg:"Pantalla de caminantes, pero no distingo si es Entrada o Salida. Cargalo a mano."};
+    const n = toN(d.caminantes ?? d.contador);
+    if(n==null) return {ok:false,msg:"Pantalla de caminantes sin total legible. Cargalo a mano."};
+    state[dir].caminantes=n; return {ok:true,warn:low,msg:`Caminantes · ${dl}: ${n}`};
+  }
+  if(!dir) return {ok:false,msg:d.direccion==="ambas"?"Está tildado Entrada-Salida. Sacá la foto con Entrada o con Salida.":"No distingo si es Entrada o Salida."};
+  const x=state[dir];
+  if(d.pantalla==="companias"){
+    const rows=Array.isArray(d.companias)?d.companias:[]; const got=[]; let taa=0;
+    rows.forEach(r=>{
+      const nm=String(r.nombre||"").toUpperCase(), et=String(r.etiqueta||"").toUpperCase().trim(), tot=toN(r.total);
+      if(tot==null) return;
+      if(nm.includes("PARTICULAR")||et==="SIN"){ x.partPers=tot; got.push("Particular "+tot); }
+      else if(et==="TDC"||nm.includes("TRANSPORTE DE CARGA")){ x.camChlPers=tot; got.push("TDC "+tot); }
+      else if(et==="TDP"||nm.includes("TRANSPORTE DE PASAJ")){ x.chk.tdp=tot; got.push("TDP "+tot); }
+      else if(nm.includes("TRANSITO ARG")){
+        let isP = /P$/.test(et) ? true : /C$/.test(et) ? false : (taa>0);
+        taa++;
+        if(isP){ x.chk.taaP=tot; got.push("TAA P "+tot); } else { x.camArgPers=tot; got.push("TAA C "+tot); }
+      }
+    });
+    if(!got.length) return {ok:false,msg:"Compañías: no pude leer los totales."};
+    return {ok:true,warn:low,msg:`Compañías · ${dl}: ${got.join(" · ")}`+(low?" (verificá)":"")};
+  }
+  if(d.pantalla==="vehiculos"){
+    const c=d.compania, n=toN(d.contador), rows=Array.isArray(d.vehiculos)?d.vehiculos:[];
+    if(!c) return {ok:false,msg:"Vehículos: no reconocí la compañía del título."};
+    const base=`Vehículos ${NOMBRE[c]} · ${dl}`;
+    const simple={particular:"partVeh",taa_carga:"camArgVeh",tdc:"camChlVeh"}[c];
+    if(simple){
+      const v = n ?? (rows.length||null);
+      if(v==null) return {ok:false,msg:base+": no leo el contador 1/N."};
+      x[simple]=v; return {ok:true,warn:low||n==null,msg:`${base}: ${v}`+(n==null?" (contado de filas, verificá)":"")};
+    }
+    const key=c==="tdp"?"colChl":"colArg";
+    mergeBuses(x[key],rows);
+    if(n!=null) x.chk[key==="colChl"?"colChlN":"colArgN"]=n;
+    const falta = n!=null && x[key].length<n;
+    return {ok:true,warn:falta||low,msg:`${base}: ${rows.length} micro(s) leído(s)`+(n!=null?` de ${n}`:"")+(falta?". Hay más en la lista: desplazala y sacá otra foto.":"")};
+  }
+  return {ok:false,msg:"No reconocí la pantalla."+(d.nota?" "+d.nota:"")};
+}
+
+const keyEl=document.getElementById("apikey"); keyEl.value=apiKey();
+document.getElementById("saveKey").addEventListener("click",()=>{ store.set("ss-apikey",keyEl.value.trim()); updAiOff(); toast(keyEl.value.trim()?"Clave guardada":"Sin clave"); });
+document.getElementById("delKey").addEventListener("click",()=>{ keyEl.value=""; store.set("ss-apikey",""); updAiOff(); toast("Clave borrada"); });
+/* ---------- render general ---------- */
+function renderAll(){ bindInputs(); renderColectivos(); refresh(); }
+renderAll();
+</script>
+</body>
+</html>
