@@ -425,13 +425,13 @@ Devolvé SOLO un objeto JSON, sin texto adicional, con esta forma:
  "nota": "texto breve"
 }
 Reglas:
-- "pantalla": la pestaña activa (resaltada en naranja) entre Compañías, Vehículos y Tránsitos. Si es una pantalla de peatones/caminantes usá "caminantes".
+- "pantalla": la pestaña activa (resaltada en naranja) entre Compañías, Vehículos y Tránsitos. Si la ventana se titula "Consulta de tránsito - Totales" (o es de peatones/caminantes), es "caminantes".
 - "direccion": la casilla tildada arriba (Entrada, Salida o Entrada - Salida = "ambas").
 - "compania": según el título grande en negrita: PARTICULAR → "particular"; TRANSITO ARGENTINA ARGENTINA C (termina en C) → "taa_carga"; TRANSITO ARGENTINA ARGENTINA P (termina en P) → "taa_pasajeros"; TRANSPORTE DE CARGA → "tdc"; TRANSPORTE DE PASAJEROS → "tdp".
 - "contador": el número que va después de la barra en el contador abajo a la izquierda de la grilla ("1/46" → 46).
 - "companias": solo en la pestaña Compañías: cada fila en orden de arriba hacia abajo, con la columna "Total".
 - "vehiculos": solo en la pestaña Vehículos: TODAS las filas visibles en orden, con su patente y la columna "Total". Vacío si no aplica.
-- "caminantes": solo en pantallas de peatones/caminantes: total de personas (usá el contador "1/N" o "Totales consultados").
+- "caminantes": solo en la pantalla "Consulta de tránsito - Totales" (caminantes): el total de personas que muestra (si hay varias cifras, el total general; si no, el contador "1/N"). En "direccion" indicá si la consulta es de Entrada o de Salida según lo que esté marcado o escrito en la pantalla.
 - No incluyas nombres ni números de documento de personas.`;
 
 (async()=>{
