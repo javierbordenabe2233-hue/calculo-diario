@@ -490,7 +490,7 @@ Devolvé SOLO un objeto JSON, sin texto adicional, con esta forma:
  "direccion": "entrada" | "salida" | "ambas" | null,
  "compania": "particular" | "taa_carga" | "taa_pasajeros" | "tdc" | "tdp" | null,
  "contador": número o null,
- "companias": [{"nombre": "texto", "etiqueta": "texto", "total": número}],
+ "companias": [{"nombre": "texto", "etiqueta": "texto", "aceptados": número}],
  "vehiculos": [{"patente": "texto", "total": número}],
  "caminantes": número o null,
  "confianza": "alta" | "media" | "baja",
@@ -501,7 +501,7 @@ Reglas:
 - "direccion": la casilla tildada arriba (Entrada, Salida o Entrada - Salida = "ambas").
 - "compania": según el título grande en negrita: PARTICULAR → "particular"; TRANSITO ARGENTINA ARGENTINA C (termina en C) → "taa_carga"; TRANSITO ARGENTINA ARGENTINA P (termina en P) → "taa_pasajeros"; TRANSPORTE DE CARGA → "tdc"; TRANSPORTE DE PASAJEROS → "tdp".
 - "contador": el número que va después de la barra en el contador abajo a la izquierda de la grilla ("1/46" → 46).
-- "companias": solo en la pestaña Compañías: cada fila en orden de arriba hacia abajo, con la columna "Total".
+- "companias": solo en la pestaña Compañías: cada fila en orden de arriba hacia abajo. En "aceptados" va el número de la columna "A" (Aceptados), la que tiene el encabezado pintado de VERDE, a la derecha de "Total". NO uses la columna "Total".
 - "vehiculos": solo en la pestaña Vehículos: TODAS las filas visibles en orden, con su patente y la columna "Total". Vacío si no aplica.
 - "caminantes": solo en la pantalla "Consulta de tránsito - Totales" (caminantes): el total de personas que muestra (si hay varias cifras, el total general; si no, el contador "1/N"). En "direccion" indicá si la consulta es de Entrada o de Salida según lo que esté marcado o escrito en la pantalla.
 - No incluyas nombres ni números de documento de personas.`;
@@ -616,7 +616,7 @@ function apply(d){
   if(d.pantalla==="companias"){
     const rows=Array.isArray(d.companias)?d.companias:[]; const got=[]; let taa=0;
     rows.forEach(r=>{
-      const nm=String(r.nombre||"").toUpperCase(), et=String(r.etiqueta||"").toUpperCase().trim(), tot=toN(r.total);
+      const nm=String(r.nombre||"").toUpperCase(), et=String(r.etiqueta||"").toUpperCase().trim(), tot=toN(r.aceptados ?? r.total);
       if(tot==null) return;
       if(nm.includes("PARTICULAR")||et==="SIN"){ x.partPers=tot; got.push("Particular "+tot); }
       else if(et==="TDC"||nm.includes("TRANSPORTE DE CARGA")){ x.camChlPers=tot; got.push("TDC "+tot); }
