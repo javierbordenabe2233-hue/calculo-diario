@@ -71,7 +71,8 @@
   .tabs2{display:flex;gap:6px;margin-bottom:10px}
   .pill{border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 12px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
   .pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-  .hide{display:none}
+  #iosHelp{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:flex;align-items:flex-end;justify-content:center}
+  .hide,#iosHelp.hide{display:none !important}
 </style>
 </head>
 <body>
@@ -191,7 +192,7 @@
   </section>
 </main>
 <div class="toast" id="toast"></div>
-<div id="iosHelp" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:flex;align-items:flex-end;justify-content:center">
+<div id="iosHelp" class="hide">
   <div class="card" style="margin:0 0 20px;max-width:420px;width:92%">
     <h2>Instalar en iPhone</h2>
     <ol class="hint" style="padding-left:18px;font-size:14.5px;line-height:1.6">
@@ -593,6 +594,7 @@ document.getElementById("delKey").addEventListener("click",()=>{ keyEl.value="";
     else toast("Usá el menú ⋮ del navegador → Instalar app");
   });
   document.getElementById("iosClose").addEventListener("click",()=>help.classList.add("hide"));
+  help.addEventListener("click",e=>{ if(e.target===help) help.classList.add("hide"); });
 })();
 /* ---------- render general ---------- */
 function renderAll(){ bindInputs(); renderColectivos(); refresh(); }
