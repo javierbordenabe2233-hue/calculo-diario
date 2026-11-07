@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cálculo diario · San Sebastián</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f2a44">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cálculo SS">
 <style>
   :root{
     --navy:#1f2a44; --navy2:#2d3b5c; --red:#c62828; --redbg:#fdecea;
@@ -74,6 +81,7 @@
   <div class="toprow">
     <label>Fecha <input type="date" id="fecha"></label>
     <button class="btn sm ghost" id="btnNuevo" style="padding:6px 10px">Nuevo día</button>
+    <button class="btn sm red hide" id="btnInstall" style="padding:6px 12px">⬇ Instalar app</button>
   </div>
   <nav id="nav">
     <button data-v="fotos" class="on">1 · Fotos</button>
@@ -183,6 +191,17 @@
   </section>
 </main>
 <div class="toast" id="toast"></div>
+<div id="iosHelp" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:flex;align-items:flex-end;justify-content:center">
+  <div class="card" style="margin:0 0 20px;max-width:420px;width:92%">
+    <h2>Instalar en iPhone</h2>
+    <ol class="hint" style="padding-left:18px;font-size:14.5px;line-height:1.6">
+      <li>Abrí esta página en <b>Safari</b>.</li>
+      <li>Tocá el botón <b>Compartir</b> (cuadrado con flecha hacia arriba).</li>
+      <li>Elegí <b>Agregar a pantalla de inicio</b> y tocá <b>Agregar</b>.</li>
+    </ol>
+    <button class="btn" id="iosClose" style="width:100%">Entendido</button>
+  </div>
+</div>
 
 <script>
 /* ---------- estado ---------- */
@@ -557,6 +576,24 @@ function apply(d){
 const keyEl=document.getElementById("apikey"); keyEl.value=apiKey();
 document.getElementById("saveKey").addEventListener("click",()=>{ store.set("ss-apikey",keyEl.value.trim()); updAiOff(); toast(keyEl.value.trim()?"Clave guardada":"Sin clave"); });
 document.getElementById("delKey").addEventListener("click",()=>{ keyEl.value=""; store.set("ss-apikey",""); updAiOff(); toast("Clave borrada"); });
+/* ---------- instalar (PWA) ---------- */
+(function(){
+  const btn=document.getElementById("btnInstall"), help=document.getElementById("iosHelp");
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let deferred=null;
+  if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+  if(standalone) return;
+  window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferred=e; btn.classList.remove("hide"); });
+  window.addEventListener("appinstalled",()=>{ btn.classList.add("hide"); toast("App instalada"); });
+  if(ios) btn.classList.remove("hide");
+  btn.addEventListener("click",async()=>{
+    if(deferred){ deferred.prompt(); const c=await deferred.userChoice; if(c.outcome==="accepted") btn.classList.add("hide"); deferred=null; }
+    else if(ios){ help.classList.remove("hide"); }
+    else toast("Usá el menú ⋮ del navegador → Instalar app");
+  });
+  document.getElementById("iosClose").addEventListener("click",()=>help.classList.add("hide"));
+})();
 /* ---------- render general ---------- */
 function renderAll(){ bindInputs(); renderColectivos(); refresh(); }
 renderAll();
