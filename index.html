@@ -132,7 +132,7 @@
 <main>
   <!-- FOTOS -->
   <section id="v-fotos">
-    <div id="aiOff" class="warnbox hide">La lectura automática de fotos no está activada. Cargá tu clave de API en <b>Ajustes</b>, o cargá los números a mano en <b>Datos</b>.</div>
+    <div id="aiOff" class="warnbox hide"></div>
     <div class="card drop" id="drop">
       <input type="file" id="file" accept="image/*" multiple class="hide">
       <input type="file" id="fileCam" accept="image/*" capture="environment" class="hide">
@@ -514,8 +514,16 @@ Reglas:
   updAiOff();
 })();
 function apiKey(){ return (store.get("ss-apikey")||"").trim(); }
-function canRead(){ return !!sample || !!apiKey(); }
-function updAiOff(){ document.getElementById("aiOff").classList.toggle("hide", canRead()); document.getElementById("keyCard").classList.toggle("hide", !!sample); }
+function canRead(){ return !!sample || (!isFramed() && !!apiKey()); }
+function isFramed(){ try{ return window.top!==window; }catch(e){ return true; } }
+function updAiOff(){
+  const el=document.getElementById("aiOff"), framed=isFramed();
+  el.innerHTML = framed
+    ? "Para leer las fotos tenés que abrir este enlace <b>con tu cuenta de Claude iniciada</b> (en la app de Claude o en claude.ai) y aceptar el permiso. Mientras tanto podés cargar los números a mano en <b>Datos</b>."
+    : "La lectura automática de fotos no está activada. Cargá tu clave de API en <b>Ajustes</b>, o cargá los números a mano en <b>Datos</b>.";
+  el.classList.toggle("hide", canRead());
+  document.getElementById("keyCard").classList.toggle("hide", !!sample || framed);
+}
 async function blobB64(blob){ const buf=new Uint8Array(await blob.arrayBuffer()); let s=""; for(let i=0;i<buf.length;i+=0x8000) s+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000)); return btoa(s); }
 async function readImage(blob){
   if(sample){ const res=await sample(PROMPT,{images:[blob], modelTier:"default", cache:false}); return res.text||""; }
@@ -537,11 +545,19 @@ drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("over
 drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
 drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("over");addFiles([...e.dataTransfer.files].filter(f=>f.type.startsWith("image/")));});
 
+function loadImg(file){
+  return new Promise((ok,ko)=>{ const u=URL.createObjectURL(file), im=new Image();
+    im.onload=()=>{ ok({img:im,w:im.naturalWidth,h:im.naturalHeight,url:u}); }; im.onerror=()=>{ URL.revokeObjectURL(u); ko(new Error("img")); }; im.src=u; });
+}
 async function prep(file){
-  const bmp=await createImageBitmap(file);
+  let bmp;
+  try{ if(!window.createImageBitmap) throw 0; const b=await createImageBitmap(file); bmp={img:b,w:b.width,h:b.height}; }
+  catch(e){ bmp=await loadImg(file); }
+  bmp.width=bmp.w; bmp.height=bmp.h; const src=bmp.img;
   const sc=Math.min(1,1800/Math.max(bmp.width,bmp.height));
   const c=document.createElement("canvas"); c.width=Math.round(bmp.width*sc); c.height=Math.round(bmp.height*sc);
-  c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+  c.getContext("2d").drawImage(src,0,0,c.width,c.height);
+  if(bmp.url) URL.revokeObjectURL(bmp.url);
   const blob=await new Promise(r=>c.toBlob(r,"image/jpeg",0.85));
   const t=document.createElement("canvas"); const ts=160/Math.max(c.width,c.height); t.width=c.width*ts; t.height=c.height*ts;
   t.getContext("2d").drawImage(c,0,0,t.width,t.height);
@@ -559,7 +575,7 @@ async function processQueue(){
   if(busy) return; busy=true;
   while(true){
     const p=photos.find(x=>x.status==="wait"); if(!p) break;
-    if(!canRead()){ p.status="err"; p.msg="Lectura automática no disponible: configurá la clave en la pestaña Ajustes o cargá los datos a mano."; renderPhotos(); continue; }
+    if(!canRead()){ p.status="err"; p.msg= isFramed() ? "No se puede leer: abrí el enlace con tu cuenta de Claude iniciada, o cargá los datos a mano." : "Lectura automática no disponible: configurá la clave en la pestaña Ajustes o cargá los datos a mano."; renderPhotos(); continue; }
     p.status="run"; p.msg="Leyendo…"; renderPhotos();
     try{
       const txt=await readImage(p.blob); const a=txt.indexOf("{"), b=txt.lastIndexOf("}");
