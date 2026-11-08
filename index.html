@@ -214,8 +214,8 @@
       <h2>Lista para el Excel</h2>
       <p class="hint" style="margin:0 0 12px">Mismo orden que la <b>Planilla p. estadístico mensual</b> (filas 1 a 29). Copiala y pegala en la primera celda de la columna del día.</p>
       <div class="row" style="margin-bottom:10px">
-        <button class="btn" id="cpAll">Copiar filas 1–29</button>
-        <button class="btn line" id="cpNum">Solo los números</button>
+        <button class="btn" id="cpAll">Copiar filas 1–29 (con fechas)</button>
+        <button class="btn line" id="cpNum">Sin las fechas</button>
       </div>
       <textarea class="fallback hide" id="fallback" readonly></textarea>
       <table class="est" id="estTable"></table>
@@ -469,8 +469,10 @@ function renderEst(r){
   document.getElementById("estTable").innerHTML = lastEst.map((x,i)=>
     `<tr class="${x.h?'hd':''}"><td>${i+1}</td><td class="c" style="text-align:left">${x.a}</td><td class="c">${x.b}</td><td class="v">${x.h?x.v:(x.m?money(x.v):fmt(x.v))}</td></tr>`).join("");
 }
-document.getElementById("cpAll").addEventListener("click",()=>copy(lastEst.map(x=>x.v).join("\n"),"Copiadas las 29 filas"));
-document.getElementById("cpNum").addEventListener("click",()=>copy(lastEst.filter(x=>!x.h).map(x=>x.v).join("\n"),"Copiados los 26 números"));
+function fechaLarga(){ const [y,m,d]=state.fecha.split("-"); return d+"/"+m+"/"+y; }
+const copyVal = x => x.h ? fechaLarga() : (x.m ? money(x.v) : x.v);
+document.getElementById("cpAll").addEventListener("click",()=>copy(lastEst.map(copyVal).join("\n"),"Copiadas las 29 filas, con fecha y pesos"));
+document.getElementById("cpNum").addEventListener("click",()=>copy(lastEst.filter(x=>!x.h).map(copyVal).join("\n"),"Copiados los 26 valores"));
 
 /* ---------- copiar ---------- */
 let toastT;
